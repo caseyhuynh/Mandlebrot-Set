@@ -8,10 +8,10 @@ ComplexPlane::ComplexPlane(int pixelWidth, int pixelHeight)
 {
 	m_pixel_size = { pixelWidth, pixelHeight };
 
-	m_aspectRatio = pixelWidth / (pixelHeight *1.0);
+	m_aspectRatio = pixelWidth / (pixelHeight * 1.0);
 	m_plane_center = { 0,0 };
 	m_plane_size = { BASE_WIDTH, BASE_HEIGHT * m_aspectRatio };
-	m_zoomCount = 0; 
+	m_zoomCount = 0;
 	m_State = State::CALCULATING;
 
 	m_vArray.setPrimitiveType(Points);
@@ -23,29 +23,46 @@ void ComplexPlane::draw(RenderTarget& target, RenderStates states) const
 	target.draw(m_vArray);
 }
 
-void ComplexPlane::updateRender()
-{
+void ComplexPlane::updateRender() {
 	int pixelHeight = m_pixel_size.y;
 	int pixelWidth = m_pixel_size.x;
 
-	if (m_State == State::CALCULATING)
-	{
-		for (int i = 0; i < pixelHeight; i++)
-		{
-			for (int j = 0; j < pixelWidth; j++)
-			{
-				m_vArray[j + i * pixelWidth].position = { (float)j, (float)i };
-				Vector2i local = { j,i }; 
-				Vector2f coords = mapPixelToCoords(local);
-				size_t count = countIterations(coords);
-				Uint8 r, g, b;
-				iterationsToRGB(count, r, g, b);
-				m_vArray[j + i * pixelWidth].color = { r,g,b };
-				m_State = State::DISPLAYING;
+	if (m_State == State::CALCULATING) {
+		int numThreads = thread::hardware_concurrency(); // Number of threads
+		vector<thread> threads;
+		int rowsPerThread = pixelHeight / numThreads;
+
+		// Lambda function for thread tasks
+		auto computeChunk = [this, pixelWidth](int startRow, int endRow) {
+			for (int i = startRow; i < endRow; ++i) {
+				for (int j = 0; j < pixelWidth; ++j) {
+					Vector2i local = { j, i };
+					Vector2f coords = mapPixelToCoords(local);
+					size_t count = countIterations(coords);
+					Uint8 r, g, b;
+					iterationsToRGB(count, r, g, b);
+					m_vArray[j + i * pixelWidth].position = { static_cast<float>(j), static_cast<float>(i) };
+					m_vArray[j + i * pixelWidth].color = { r, g, b };
+				}
 			}
+			};
+
+		// Launch threads for each chunk
+		for (int t = 0; t < numThreads; ++t) {
+			int startRow = t * rowsPerThread;
+			int endRow = (t == numThreads - 1) ? pixelHeight : startRow + rowsPerThread;
+			threads.emplace_back(computeChunk, startRow, endRow);
 		}
+
+		// Wait for threads to finish
+		for (auto& thread : threads) {
+			thread.join();
+		}
+
+		m_State = State::DISPLAYING; // Set state after computation
 	}
 }
+
 
 void ComplexPlane::zoomIn()
 {
@@ -83,13 +100,13 @@ void ComplexPlane::loadText(Text& text)
 	ss << "Center: (" << fixed << m_plane_center.x << ", " << fixed << m_plane_center.y << ")\n";
 	ss << "Left Click zoom in" << "\n";
 	ss << "Right click zoom out" << "\n";
-	
+
 	text.setString(ss.str());
 	text.setCharacterSize(20);
 	FloatRect textRect = text.getLocalBounds();
 	text.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
 	text.setPosition(150, 75);
-	
+
 }
 
 size_t ComplexPlane::countIterations(Vector2f coord)
@@ -100,10 +117,10 @@ size_t ComplexPlane::countIterations(Vector2f coord)
 	while (abs(z) < 2.0 && i < 64)
 	{
 		z = z * z + c;
-		
+
 		i++;
 	}
-	
+
 	return i;
 }
 
@@ -113,7 +130,7 @@ void ComplexPlane::iterationsToRGB(size_t count, Uint8& r, Uint8& g, Uint8& b)
 	{
 		r = 0; g = 0; b = 0; // black
 	}
-	else if (0 <= count && count <= 4) 
+	else if (0 <= count && count <= 4)
 	{
 		r = 30; g = 0; b = 255; // purple
 	}
@@ -182,8 +199,8 @@ void ComplexPlane::iterationsToRGB(size_t count, Uint8& r, Uint8& g, Uint8& b)
 
 Vector2f ComplexPlane::mapPixelToCoords(Vector2i mousePixel)
 {
-	float x = ((mousePixel.x * 1.0)/ 1920)* (m_plane_size.x)+ (m_plane_center.x - m_plane_size.x / 2.0);
-	float y = ((mousePixel.y * 1.0)/ -1080) * (-m_plane_size.y) + (m_plane_center.y - m_plane_size.y / 2.0);
+	float x = ((mousePixel.x * 1.0) / 1920) * (m_plane_size.x) + (m_plane_center.x - m_plane_size.x / 2.0);
+	float y = ((mousePixel.y * 1.0) / -1080) * (-m_plane_size.y) + (m_plane_center.y - m_plane_size.y / 2.0);
 
 	return Vector2f(x, y);
 }
