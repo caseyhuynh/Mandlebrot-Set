@@ -28,7 +28,7 @@ void ComplexPlane::updateRender() {
 	int pixelWidth = m_pixel_size.x;
 
 	if (m_State == State::CALCULATING) {
-		int numThreads = (thread::hardware_concurrency()) ? thread::hardware_concurrency() : 4; // Number of threads
+		int numThreads = (thread::hardware_concurrency() == 0) ? 4 : thread::hardware_concurrency(); // Number of threads
 		vector<thread> threads;
 		int rowsPerThread = pixelHeight / numThreads;
 
