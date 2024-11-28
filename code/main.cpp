@@ -13,12 +13,12 @@ using namespace std;
 
 int main()
 {
-     int pixelWidth = VideoMode::getDesktopMode().width;
-     int pixelHeight = VideoMode::getDesktopMode().height;
+    int pixelWidth = VideoMode::getDesktopMode().width;
+    int pixelHeight = VideoMode::getDesktopMode().height;
 
     VideoMode vm(pixelWidth, pixelHeight);
     RenderWindow window(vm, "Mandlebrot Project", Style::Default);
-    ComplexPlane balls(pixelWidth, pixelHeight);
+    ComplexPlane Plane(pixelWidth, pixelHeight);
 
     bool update = true;
 
@@ -47,8 +47,8 @@ int main()
                     std::cout << "mouse x: " << event.mouseButton.x << std::endl;
                     std::cout << "mouse y: " << event.mouseButton.y << std::endl;
                     Vector2i mCoords = { event.mouseButton.x, event.mouseButton.y };
-                    balls.setCenter(mCoords);
-                    balls.zoomIn();
+                    Plane.setCenter(mCoords);
+                    Plane.zoomIn();
                     update = true;
                 }
                 else if (event.mouseButton.button == sf::Mouse::Right)
@@ -57,8 +57,8 @@ int main()
                     std::cout << "mouse x: " << event.mouseButton.x << std::endl;
                     std::cout << "mouse y: " << event.mouseButton.y << std::endl;
                     Vector2i mCoords = { event.mouseButton.x, event.mouseButton.y };
-                    balls.setCenter(mCoords);
-                    balls.zoomOut();
+                    Plane.setCenter(mCoords);
+                    Plane.zoomOut();
                     update = true;
                 }
 
@@ -67,7 +67,7 @@ int main()
             {
                 
                 Vector2i mCoords = { event.mouseMove.x, event.mouseMove.y }; 
-                balls.setMouseLocation(mCoords);
+                Plane.setMouseLocation(mCoords);
                 update = true;
                
             }
@@ -81,8 +81,8 @@ int main()
             // ...
             if (update)
             {
-                balls.updateRender();
-                balls.loadText(MandleText);
+                Plane.updateRender();
+                Plane.loadText(MandleText);
                 update = false;
             }
 
@@ -91,7 +91,7 @@ int main()
             // Draw game objects
             // ...
            
-            window.draw(balls);
+            window.draw(Plane);
             window.draw(MandleText);
             window.display();
         }
