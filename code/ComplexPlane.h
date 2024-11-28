@@ -6,6 +6,7 @@
 #include <vector>
 #include <cmath>
 #include <complex>
+#include <thread>
 
 const unsigned int MAX_ITER = 64;
 const float BASE_WIDTH = 4.0;
