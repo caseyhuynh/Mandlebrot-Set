@@ -8,7 +8,7 @@ ComplexPlane::ComplexPlane(int pixelWidth, int pixelHeight)
 {
 	m_pixel_size = { pixelWidth, pixelHeight };
 
-	m_aspectRatio = pixelWidth / (pixelHeight * 1.0);
+	m_aspectRatio = pixelHeight / (pixelWidth * 1.0);
 	m_plane_center = { 0,0 };
 	m_plane_size = { BASE_WIDTH, BASE_HEIGHT * m_aspectRatio };
 	m_zoomCount = 0;
